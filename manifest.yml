@@ -1,0 +1,12 @@
+---
+applications:
+- name: apiservice
+  buildpack: dotnet_core_buildpack
+  random-route: true
+  health-check-type: none
+  memory: 512M
+  services:
+  - rabbitmq
+  - myRedisService
+  env:
+    ASPNETCORE_ENVIRONMENT: Production
