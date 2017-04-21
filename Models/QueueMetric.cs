@@ -45,6 +45,7 @@ namespace APIService.Models
   public enum RoutingAction
   {
     Ignored,
-    Failed
+    Failed,
+    Processed
   }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using APIService.Handlers;
 using APIService.Models;
 using APIService.Repository;
 using Microsoft.Extensions.Logging;
@@ -11,6 +13,7 @@ namespace APIService.Services
     private ConnectionFactory _connectionFactory;
     private IQueueConsumerService _queueConsumerService;
     private ILogger<QueueService> _logger; 
+    private Dictionary<string,IMessageHandler> _handlers;
     public QueueService(IQueueConsumerService queueConsumerService, ConnectionFactory rabbitConnection, ILoggerFactory loggerFactory)
     {
        _connectionFactory = rabbitConnection;
@@ -28,10 +31,16 @@ namespace APIService.Services
 
     public void ProcessMessage(string message, QueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric)
     {
-      queueConsumerService.Model.BasicAck(deliveryTag, false);
-      queueMetric.RoutingAction = RoutingAction.Ignored;
-
-      _logger.LogInformation($"Message recieved: {message}");
+      var handlerFunc = ResolveHandler();
+      if(handlerFunc.Invoke(message))
+      {
+        queueConsumerService.Model.BasicAck(deliveryTag, false);
+        queueMetric.RoutingAction = RoutingAction.Processed;
+        return;
+      }
+     
+      this.RaiseException(new Exception("Message not processed."), queueConsumerService,deliveryTag,queueMetric);
+     
     }
 
     private void RaiseException(Exception ex, QueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric)
@@ -48,8 +57,27 @@ namespace APIService.Services
         _queueConsumerService.QueueName,_queueConsumerService.RoutingKeyName);
     }
 
-    
+    public void RegisterHandler(IMessageHandler handler)
+    {
+      if(_handlers == null)
+        _handlers = new Dictionary<string, IMessageHandler>();
 
+      _handlers.Add("myHandler",handler);
+    }
+
+    public void RegisterHandlers(IEnumerable<IMessageHandler> handlers)
+    {
+      foreach(var h in handlers)
+      {
+        RegisterHandler(h);
+      }
+    }
+
+    private Func<string, bool> ResolveHandler()
+    {
+      var m = _handlers["myHandler"];    
+      return m.Handle;  
+    }
     
   }
 }

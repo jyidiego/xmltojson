@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using APIService.Extensions;
+using APIService.Handlers;
 using APIService.Repository;
 using APIService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -68,8 +69,9 @@ namespace APIService
             });
 
             services.AddTransient<IMetricsRepository, RedisMetricsRepository>();
+            services.AddTransient<IMessageHandler, LogMessageHandler>();
             services.AddSingleton<IQueueConsumerService, QueueConsumerService>();
-            services.AddSingleton<IQueueService, QueueService>();
+            services.AddSingleton<IQueueService, QueueService>();            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -78,7 +80,7 @@ namespace APIService
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            app.UseQueueService();
+            app.StartQueueService();
             
             app.UseCors("CorsPolicy");
 

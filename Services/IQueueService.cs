@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using APIService.Handlers;
 using APIService.Models;
 
 namespace APIService.Services
@@ -9,5 +11,9 @@ namespace APIService.Services
 
     void ProcessMessage(string message, QueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric);
 
+    void RegisterHandler(IMessageHandler handler);
+
+    void RegisterHandlers(IEnumerable<IMessageHandler> handlers);
+    
   }
 }
