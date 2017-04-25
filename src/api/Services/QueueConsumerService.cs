@@ -30,6 +30,7 @@ namespace APIService.Services
     public string RoutingKeyName {get;set;}
     public string ExchangeName {get;set;}
     public string ExchangeType{get;set;}
+    public EventingBasicConsumer EventingBasicConsumer {get;set;}
 
 
 
@@ -45,12 +46,12 @@ namespace APIService.Services
         string exchangeName, string queueName, string routingKeyName)
     {
         BindToQueue(exchangeName, queueName, routingKeyName);
- 
-        var consumer = new EventingBasicConsumer(Model);
-
+        
+        if(this.EventingBasicConsumer == null)
+            EventingBasicConsumer = new EventingBasicConsumer(Model);
           
         // Receive the message from the queue and act on that message
-        consumer.Received += (o, e) =>
+        EventingBasicConsumer.Received += (o, e) =>
             {
                 _logger.LogInformation("Messge Received handler invoked.");
 
@@ -83,19 +84,21 @@ namespace APIService.Services
        
  
         // If the consumer shutdowns reconnect to rabbit and begin reading from the queue again.
-        consumer.Shutdown += (o, e) =>
+        EventingBasicConsumer.Shutdown += (o, e) =>
             {
                 Connect();
                 ReadFromQueue(onDequeue, onError, exchangeName, queueName, routingKeyName);
             };
  
-        Model.BasicConsume(queueName, false, consumer);
+        Model.BasicConsume(queueName, false, EventingBasicConsumer);
     }
 
     private string GetInstanceId()
     {
       return Guid.NewGuid().ToString();
     }
+
+   
 
 
 
@@ -116,7 +119,11 @@ namespace APIService.Services
                 {
                     {"x-ha-policy", "all"}
                 };
-        QueueName = Model.QueueDeclare(queueName, durable, exclusive, autoDelete, queueArgs);
+        var queueDeclareOk = Model.QueueDeclare(queueName, durable, exclusive, autoDelete, queueArgs);
+
+        if(queueDeclareOk != null)
+            QueueName = queueDeclareOk.QueueName;
+            
         Model.QueueBind(queueName, exchangeName, routingKeyName, null);
     }
 
