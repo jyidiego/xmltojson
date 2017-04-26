@@ -8,6 +8,7 @@ using APIService.Models;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
+using RabbitMQ.Client.Framing.Impl;
 
 namespace APIService.Tests
 {
@@ -16,6 +17,8 @@ namespace APIService.Tests
         private ILoggerFactory _loggerFactory;
         private IMetricsRepository _metricsRepo;
         private ConnectionFactory _connectionFactory;
+
+       
         
         public QueueConsumerServiceTests()
         {
@@ -54,30 +57,67 @@ namespace APIService.Tests
         public void ReadFromQueue()
         {
             var modelMock = new Mock<IModel>();
-            var connection = new Mock<IConnection>();
-
-            modelMock.Setup(m=>m.QueueDeclare("QueueName",true,false,false,null)).Returns(new QueueDeclareOk("QueueName", 0, 1));
+            var connection = new Mock<IConnection>(MockBehavior.Strict);
+           
+            modelMock.Setup(m=>m.QueueDeclare("QueueName",true,false,false,null)).Returns(new RabbitMQ.Client.QueueDeclareOk("QueueName", 0, 1));
             var model = modelMock.Object;
             var consumer = new EventingBasicConsumer(model);
             var connectonFactory = new Mock<ConnectionFactory>();
 
-            connection.Setup(c=>c.CreateModel()).Returns(model);            
+            connection.Setup(c=>c.CreateModel()).Returns(model); 
+            connection.SetupProperty(c=>c.AutoClose);           
             connectonFactory.Setup(c=>c.CreateConnection()).Returns(connection.Object); 
             
             var queueConsumerService = new QueueConsumerService(_loggerFactory, _metricsRepo);
             queueConsumerService.EventingBasicConsumer = consumer;
             Assert.NotNull(queueConsumerService);
             Assert.True(queueConsumerService.Connect(connectonFactory.Object));
+            
             Action<string,QueueConsumerService,ulong,QueueMetric> onDequeue = (string message, QueueConsumerService service, ulong deliveryTag, QueueMetric queueMetric)=>{
-                throw new Exception("whts up");
+                Assert.Equal(message,"the message body");
+                Assert.NotNull(service);
+                Assert.NotNull(queueMetric);               
             };
             Action<Exception,QueueConsumerService,ulong,QueueMetric> onError = (Exception error, QueueConsumerService service, ulong deliveryTag, QueueMetric queueMetric)=>{
-        
+                Assert.Null(error); // not expecting error
             };
             queueConsumerService.ReadFromQueue(onDequeue,onError,"ExchangeName","QueueName","RoutingKeyName");
             
            queueConsumerService.EventingBasicConsumer.HandleBasicDeliver("", It.IsAny<ulong>(), false, 
-            "ExchangeName", "RoutingKeyName", null, Encoding.ASCII.GetBytes("hi there"));
+            "ExchangeName", "RoutingKeyName", null, Encoding.ASCII.GetBytes("the message body"));
+        }
+
+        [Fact]
+        public void ReadFromQueueFailure()
+        {
+            var modelMock = new Mock<IModel>();
+            var connection = new Mock<IConnection>(MockBehavior.Strict);
+           
+            modelMock.Setup(m=>m.QueueDeclare("QueueName",true,false,false,null)).Returns(new RabbitMQ.Client.QueueDeclareOk("QueueName", 0, 1));
+            var model = modelMock.Object;
+            var consumer = new EventingBasicConsumer(model);
+            var connectonFactory = new Mock<ConnectionFactory>();
+
+            connection.Setup(c=>c.CreateModel()).Returns(model); 
+            connection.SetupProperty(c=>c.AutoClose);           
+            connectonFactory.Setup(c=>c.CreateConnection()).Returns(connection.Object); 
+            
+            var queueConsumerService = new QueueConsumerService(_loggerFactory, _metricsRepo);
+            queueConsumerService.EventingBasicConsumer = consumer;
+            Assert.NotNull(queueConsumerService);
+            Assert.True(queueConsumerService.Connect(connectonFactory.Object));
+            
+            Action<string,QueueConsumerService,ulong,QueueMetric> onDequeue = (string message, QueueConsumerService service, ulong deliveryTag, QueueMetric queueMetric)=>{
+                throw new Exception("Unexpected exception");              
+            };
+            Action<Exception,QueueConsumerService,ulong,QueueMetric> onError = (Exception error, QueueConsumerService service, ulong deliveryTag, QueueMetric queueMetric)=>{
+                Assert.NotNull(error); // not expecting error
+                Assert.Equal(error.Message,"Unexpected exception");
+            };
+            queueConsumerService.ReadFromQueue(onDequeue,onError,"ExchangeName","QueueName","RoutingKeyName");
+            
+           queueConsumerService.EventingBasicConsumer.HandleBasicDeliver("", It.IsAny<ulong>(), false, 
+            "ExchangeName", "RoutingKeyName", null, Encoding.ASCII.GetBytes("the message body"));
         }
     }
 

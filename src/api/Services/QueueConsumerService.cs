@@ -123,7 +123,7 @@ namespace APIService.Services
 
         if(queueDeclareOk != null)
             QueueName = queueDeclareOk.QueueName;
-            
+
         Model.QueueBind(queueName, exchangeName, routingKeyName, null);
     }
 
