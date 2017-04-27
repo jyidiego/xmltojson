@@ -9,7 +9,7 @@ namespace APIService.Services
 
     void ProcessQueue();
 
-    void ProcessMessage(string message, QueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric);
+    void ProcessMessage(string message, IQueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric);
 
     void RegisterHandler(IMessageHandler handler);
 

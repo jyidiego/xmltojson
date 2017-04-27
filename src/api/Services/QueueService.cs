@@ -29,7 +29,7 @@ namespace APIService.Services
       
     }
 
-    public void ProcessMessage(string message, QueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric)
+    public void ProcessMessage(string message, IQueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric)
     {
       var handlerFunc = ResolveHandler();
       if(handlerFunc.Invoke(message))
@@ -43,7 +43,7 @@ namespace APIService.Services
      
     }
 
-    private void RaiseException(Exception ex, QueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric)
+    private void RaiseException(Exception ex, IQueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric)
     {
       queueConsumerService.Model.BasicNack(deliveryTag, false, false);
       queueMetric.RoutingAction = RoutingAction.Failed;
