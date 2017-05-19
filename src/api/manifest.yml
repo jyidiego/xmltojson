@@ -1,0 +1,12 @@
+---
+applications:
+- name: xmltojson
+  host: xmltojson
+  buildpack: dotnet_core_buildpack
+  memory: 2048M
+  services:
+  - myRabbitService
+  - redis
+  - myMySqlService
+  env:
+    ASPNETCORE_ENVIRONMENT: Production
