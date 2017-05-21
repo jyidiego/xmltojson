@@ -14,8 +14,11 @@ namespace APIService.Services
     private IQueueConsumerService _queueConsumerService;
     private ILogger<QueueService> _logger; 
     private Dictionary<string,IMessageHandler> _handlers;
+    private bool _processing;
+    private static object _lock = new object();
     public QueueService(IQueueConsumerService queueConsumerService, ConnectionFactory rabbitConnection, ILoggerFactory loggerFactory)
     {
+       _processing = false;
        _connectionFactory = rabbitConnection;
       
       _queueConsumerService = queueConsumerService;
@@ -53,8 +56,14 @@ namespace APIService.Services
 
     public void ProcessQueue()
     {
-      _queueConsumerService.ReadFromQueue(ProcessMessage, RaiseException,_queueConsumerService.ExchangeName,
-        _queueConsumerService.QueueName,_queueConsumerService.RoutingKeyName);
+      lock(_lock)
+      {
+        _logger.LogInformation("processor started");
+        _processing = true;
+        _queueConsumerService.ReadFromQueue(ProcessMessage, RaiseException,_queueConsumerService.ExchangeName,
+          _queueConsumerService.QueueName,_queueConsumerService.RoutingKeyName);
+      }
+      
     }
 
     public void RegisterHandler(IMessageHandler handler)
@@ -69,6 +78,7 @@ namespace APIService.Services
     {
       foreach(var h in handlers)
       {
+        _logger.LogInformation("handler registered");
         RegisterHandler(h);
       }
     }
@@ -77,6 +87,11 @@ namespace APIService.Services
     {
       var m = _handlers["myHandler"];    
       return m.Handle;  
+    }
+
+    public bool IsProcessing()
+    {
+      return _processing;
     }
     
   }
