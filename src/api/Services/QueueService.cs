@@ -31,6 +31,7 @@ namespace APIService.Services
 
 		public void ProcessMessage(string message, IQueueConsumerService queueConsumerService, ulong deliveryTag, QueueMetric queueMetric)
 		{
+            _logger.LogInformation($"ProcessMessage - Message Length: {message.Length}");
 			var handlerFunc = ResolveHandler();
 			if (handlerFunc.Invoke(message))
 			{

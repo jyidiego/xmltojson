@@ -1,0 +1,6 @@
+[submodule "DataFormatConverter"]
+	path = DataFormatConverter
+	url = git@github.com:jyidiego/DataFormatConverter.git
+[submodule "src/DataFormatConverter"]
+	path = src/DataFormatConverter
+	url = git@github.com:jyidiego/DataFormatConverter.git
