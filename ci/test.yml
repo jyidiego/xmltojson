@@ -6,6 +6,6 @@ image_resource:
     repository: microsoft/dotnet
     tag: latest
 inputs:
-- name: xmltocsv 
+- name: xmltojson 
 run:
-  path: ./xmltocsv/ci/test.sh
+  path: ./xmltojson/ci/test.sh

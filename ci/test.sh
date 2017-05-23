@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pushd ./xmltocsv/test/api
+pushd ./xmltojson/test/api
     dotnet restore
     dotnet test
     ret_code=$?
