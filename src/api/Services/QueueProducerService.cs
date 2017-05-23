@@ -47,10 +47,10 @@ namespace APIService.Services
             IBasicProperties props = Model.CreateBasicProperties();
             props.ContentType = "application/json";
 
-            Model.BasicPublish( exchange: exchangeName,
+            Model.BasicPublish(exchange: exchangeName,
                                 routingKey: routingKeyName,
                                 basicProperties: props,
-                                body: body  );
+                                body: body);
         }
 
         /// <summary>

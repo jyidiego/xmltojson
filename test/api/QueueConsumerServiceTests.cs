@@ -123,9 +123,11 @@ namespace APIService.Tests
 
     public class BasicDeliverEventArgsWrapper : BasicDeliverEventArgs
     {   
+        // public byte[] Body { get; set; } 
+
         public BasicDeliverEventArgsWrapper(string message) : base()
         {
-            Body = Encoding.ASCII.GetBytes(message);           
+            Body = Encoding.UTF8.GetBytes(message);           
         } 
 
          public BasicDeliverEventArgsWrapper(string consumerTag, ulong deliveryTag, bool redelivered, 
@@ -133,6 +135,5 @@ namespace APIService.Tests
          {
              Body = body;             
          }
-        public byte[] Body { get; set; } 
     }
 }
