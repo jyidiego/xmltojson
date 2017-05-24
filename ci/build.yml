@@ -1,0 +1,13 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: microsoft/dotnet
+    tag: latest
+inputs:
+- name: xmltojson 
+outputs:
+- name: publish
+run:
+  path: ./xmltojson/ci/build.sh
